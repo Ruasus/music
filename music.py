@@ -12,7 +12,6 @@ class CustomPlayer(wavelink.Player):
   def __init__(self):
     super().__init__()
     self.queue = wavelink.Queue()
-    self.loop = False
 
 class Music(commands.Cog):
   def __init__(self, client: commands.Bot):
@@ -203,28 +202,6 @@ class Music(commands.Cog):
 
   @commands.command(name="loop", description="Chế độ lặp lại bài hát hiện tại.")
   async def toggle_loop(self, ctx):
-    vc = ctx.voice_client
-    if vc and vc.is_playing():
-        player = self.player
-        player.loop = not player.loop  # Toggle the loop status
-        if player.loop:
-            embed = discord.Embed(
-                description="Đã bật chế độ lặp lại.",
-                color=discord.Color.blurple()
-            )
-        else:
-            embed = discord.Embed(
-                description="Đã tắt chế độ lặp lại.",
-                color=discord.Color.blurple()
-            )
-        await ctx.send(embed=embed)
-    else:
-        embed = discord.Embed(
-            description="Không có bài hát nào đang phát.",
-            color=discord.Color.red()
-        )
-        await ctx.send(embed=embed)
-
 
   @commands.hybrid_command(name = "pause", aliases = ["pa"], with_app_command = True, description = "Tạm dừng phát bài hát.")
   async def pause(self, ctx):
