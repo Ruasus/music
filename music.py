@@ -1,17 +1,18 @@
 import discord
-from discord.ext import commands
-import wavelink
-from wavelink.ext import spotify
-import re
 import os
+import re
+import wavelink
+from discord.ext import commands
+from wavelink.ext import spotify
 
-SPOTIFY_ID = os.environ["SPOTIFY_ID"]
-SPOTIFY_SECRET = os.environ["SPOTIFY_SECRET"]
+SPOTIFY_ID = os.environ["SPOTIFY_ID"] #1040508123519127572#
+SPOTIFY_SECRET = os.environ["SPOTIFY_SECRET"] #oupolr8DZqyCKTv9HqGAHtSU3hfnZ3aj#
 
 class CustomPlayer(wavelink.Player):
   def __init__(self):
     super().__init__()
     self.queue = wavelink.Queue()
+    self.loop = False
 
 class Music(commands.Cog):
   def __init__(self, client: commands.Bot):
@@ -19,6 +20,7 @@ class Music(commands.Cog):
     self.song_queue = {}
     self.cid = SPOTIFY_ID
     self.csecret = SPOTIFY_SECRET
+    self.player = None
     client.loop.create_task(self.connect_nodes())
 
   async def connect_nodes(self):
@@ -199,6 +201,31 @@ class Music(commands.Cog):
       await ctx.message.delete()
       await ctx.send(embed = embed, delete_after = 5)
 
+  @commands.command(name="loop", description="Chế độ lặp lại bài hát hiện tại.")
+  async def toggle_loop(self, ctx):
+    vc = ctx.voice_client
+    if vc and vc.is_playing():
+        player = self.player
+        player.loop = not player.loop  # Toggle the loop status
+        if player.loop:
+            embed = discord.Embed(
+                description="Đã bật chế độ lặp lại.",
+                color=discord.Color.blurple()
+            )
+        else:
+            embed = discord.Embed(
+                description="Đã tắt chế độ lặp lại.",
+                color=discord.Color.blurple()
+            )
+        await ctx.send(embed=embed)
+    else:
+        embed = discord.Embed(
+            description="Không có bài hát nào đang phát.",
+            color=discord.Color.red()
+        )
+        await ctx.send(embed=embed)
+
+
   @commands.hybrid_command(name = "pause", aliases = ["pa"], with_app_command = True, description = "Tạm dừng phát bài hát.")
   async def pause(self, ctx):
     vc = ctx.voice_client
@@ -316,9 +343,55 @@ class Music(commands.Cog):
         text = "tin nhắn sẽ tự động xóa sau 5s")
       await ctx.message.delete()
       await ctx.send(embed = embed, delete_after = 5)
-
-  @commands.hybrid_command(name = "loop", aliases = ["lo"], with_app_command = True, description = "Lặp lại bài hát đang phát.")
-  async def loop(self, ctx):
+      
+  @commands.command(name="nowplaying", aliases=["np"], description="Hiển thị bài hát đang phát.")
+  async def nowplaying(self, ctx):
+    vc = ctx.voice_client
+    author = ctx.author.voice
+    if ctx.channel.id == 987421806333943828 or ctx.channel.id == 982951847398617098 or ctx.channel.id == 934816502522208256:
+      if not vc:
+        embed = discord.Embed(
+          description = "Ifrit hiện không kết nối vào kênh thoại.",
+          colour = discord.Colour(0xff0000))
+        embed.set_author(
+          name = ctx.author.name,
+          icon_url = ctx.author.avatar.url)
+        await ctx.send(embed = embed)
+      elif not author or vc.channel != author.channel:
+        embed = discord.Embed(
+          description = "Bạn cần phải kết nối vào cùng kênh thoại với Ifrit để có thể sử dụng lệnh này.",
+          colour = discord.Colour(0xff0000))
+        embed.set_author(
+          name = ctx.author.name,
+          icon_url = ctx.author.avatar.url)
+        await ctx.send(embed = embed)
+      else:
+        if vc.is_playing():
+          track = vc.current
+          embed = discord.Embed(
+              title="Đang phát:",
+              description=f"**{track.title}** \n \n**Link Gốc:** {track.uri}",
+              colour = discord.Colour(0x00ebff))
+          await ctx.send(embed=embed)
+        else:
+          embed = discord.Embed(
+            description = "Không có bài hát nào đang được phát.",
+            colour = discord.Colour(0xff0000))
+          embed.set_author(
+            name = ctx.author.name,
+            icon_url = ctx.author.avatar.url)
+          await ctx.send(embed = embed)
+    else:
+      embed = discord.Embed(
+        description = "Câu lệnh này chỉ được phép sử dụng tại <#987421806333943828> hoặc <#934816502522208256>",
+        colour = discord.Colour(0xff0000))
+      embed.set_author(
+        name = ctx.author.name,
+        icon_url = ctx.author.avatar.url)
+      embed.set_footer(
+        text = "tin nhắn sẽ tự động xóa sau 5s")
+      await ctx.message.delete()
+      await ctx.send(embed = embed, delete_after = 5)
 
   @commands.hybrid_command(name = "skip", aliases = ["s"], with_app_command = True, description = "Bỏ qua bài hát hiện tại.")
   async def skip(self, ctx):
