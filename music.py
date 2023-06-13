@@ -5,13 +5,14 @@ import wavelink
 from discord.ext import commands
 from wavelink.ext import spotify
 
-SPOTIFY_ID = os.environ["SPOTIFY_ID"] #1040508123519127572#
-SPOTIFY_SECRET = os.environ["SPOTIFY_SECRET"] #oupolr8DZqyCKTv9HqGAHtSU3hfnZ3aj#
+SPOTIFY_ID = os.environ["SPOTIFY_ID"]
+SPOTIFY_SECRET = os.environ["SPOTIFY_SECRET"]
 
 class CustomPlayer(wavelink.Player):
   def __init__(self):
     super().__init__()
     self.queue = wavelink.Queue()
+    self.loop = False
 
 class Music(commands.Cog):
   def __init__(self, client: commands.Bot):
@@ -200,8 +201,18 @@ class Music(commands.Cog):
       await ctx.message.delete()
       await ctx.send(embed = embed, delete_after = 5)
 
-  @commands.command(name="loop", description="Chế độ lặp lại bài hát hiện tại.")
-  async def toggle_loop(self, ctx):
+  @commands.hybrid_command(name = "loop", aliases = ["lo"], with_app_command = True, description = " Lặp lại bài hát hiện tại.")
+  async def loop(self, ctx):
+    vc = ctx.voice_client
+    if vc and vc.is_playing():
+      vc.queue.loop = True
+      await ctx.send('a')
+    else:
+        embed = discord.Embed(
+            description="Không có bài hát nào đang phát.",
+            color=discord.Color.red()
+        )
+        await ctx.send(embed=embed)
 
   @commands.hybrid_command(name = "pause", aliases = ["pa"], with_app_command = True, description = "Tạm dừng phát bài hát.")
   async def pause(self, ctx):
